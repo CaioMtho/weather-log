@@ -1,6 +1,14 @@
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
-    <ion-title>Dashboard Meteorol�gico</ion-title>
+    <ion-title>Dashboard Meteorológico</ion-title>
+    <ion-badge 
+      *ngIf="activeAlertsCount > 0"
+      color="danger"
+      slot="end"
+      style="margin-right: 8px;">
+      <ion-icon name="warning-outline"></ion-icon>
+      {{ activeAlertsCount }}
+    </ion-badge>
     <ion-button slot="end" fill="clear" (click)="logout()">
       <ion-icon name="log-out-outline"></ion-icon>
     </ion-button>
@@ -19,7 +27,7 @@
         {{ isConnected ? 'Conectado' : 'Desconectado' }}
       </ion-badge>
       <span class="last-update" *ngIf="lastUpdateTime">
-        �ltima atualiza��o: {{ lastUpdateTime }}
+        Última atualização: {{ lastUpdateTime }}
       </span>
     </div>
 
@@ -36,7 +44,7 @@
               <ion-icon name="thermometer-outline"></ion-icon>
             </div>
             <div class="metric-value">
-              {{ currentReading.temperature.toFixed(1) }}�C
+              {{ currentReading.temperature.toFixed(1) }}ºC
             </div>
             <div class="metric-label">Temperatura</div>
           </ion-card-content>
@@ -79,16 +87,16 @@
           <h3 class="stats-subtitle">Temperatura</h3>
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-label">M�dia</div>
-              <div class="stat-value">{{ todayStats.avgTemp.toFixed(1) }}�C</div>
+              <div class="stat-label">Média</div>
+              <div class="stat-value">{{ todayStats.avgTemp.toFixed(1) }}ºC</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">M�nima</div>
-              <div class="stat-value">{{ todayStats.minTemp.toFixed(1) }}�C</div>
+              <div class="stat-label">Mínima</div>
+              <div class="stat-value">{{ todayStats.minTemp.toFixed(1) }}ºC</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">M�xima</div>
-              <div class="stat-value">{{ todayStats.maxTemp.toFixed(1) }}�C</div>
+              <div class="stat-label">Máxima</div>
+              <div class="stat-value">{{ todayStats.maxTemp.toFixed(1) }}ºC</div>
             </div>
           </div>
 
@@ -97,15 +105,15 @@
           <h3 class="stats-subtitle">Umidade</h3>
           <div class="stats-grid">
             <div class="stat-item">
-              <div class="stat-label">M�dia</div>
+              <div class="stat-label">Média</div>
               <div class="stat-value">{{ todayStats.avgHumidity.toFixed(1) }}%</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">M�nima</div>
+              <div class="stat-label">Mínima</div>
               <div class="stat-value">{{ todayStats.minHumidity.toFixed(1) }}%</div>
             </div>
             <div class="stat-item">
-              <div class="stat-label">M�xima</div>
+              <div class="stat-label">Máxima</div>
               <div class="stat-value">{{ todayStats.maxHumidity.toFixed(1) }}%</div>
             </div>
           </div>

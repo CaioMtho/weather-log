@@ -1,8 +1,5 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-// Import the default package so both CommonJS/UMD and ESM builds resolve
-// correctly with various bundlers (Vite sometimes resolves to mqtt.js which
-// doesn't expose a named `connect` export). Use default and call `.connect`.
 import mqtt from 'mqtt';
 import type { MqttClient } from 'mqtt';
 import { BehaviorSubject, Observable, lastValueFrom } from 'rxjs';

@@ -1,0 +1,153 @@
+<ion-header [translucent]="true">
+  <ion-toolbar color="primary">
+    <ion-title>Alertas</ion-title>
+    <ion-button slot="end" fill="clear" (click)="logout()">
+      <ion-icon name="log-out-outline"></ion-icon>
+    </ion-button>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="alerts-container">
+    <div class="alerts-header">
+      <h2>
+        <ion-icon name="notifications-outline"></ion-icon>
+        Meus Alertas
+      </h2>
+      <ion-badge color="danger" *ngIf="triggeredCount > 0">
+        {{ triggeredCount }} ativos
+      </ion-badge>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Carregando alertas...</p>
+    </div>
+
+    <div class="alerts-list" *ngIf="!isLoading && alerts.length > 0">
+      <ion-item-sliding *ngFor="let alert of alerts">
+        <ion-item class="alert-item">
+          <div class="alert-content">
+            <div class="alert-header">
+              <div class="alert-info">
+                <ion-icon [name]="getAlertIcon(alert.type)"></ion-icon>
+                <div>
+                  <h3>{{ alert.name }}</h3>
+                  <p>{{ getAlertDescription(alert) }}</p>
+                </div>
+              </div>
+              <ion-toggle 
+                [checked]="alert.isActive"
+                (ionChange)="toggleAlert(alert, $event)">
+              </ion-toggle>
+            </div>
+          </div>
+        </ion-item>
+
+        <ion-item-options side="end">
+          <ion-item-option color="primary" (click)="openModal(alert)">
+            <ion-icon name="create-outline"></ion-icon>
+          </ion-item-option>
+          <ion-item-option color="danger" (click)="deleteAlert(alert)">
+            <ion-icon name="trash-outline"></ion-icon>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && alerts.length === 0">
+      <ion-icon name="alert-circle-outline" class="empty-icon"></ion-icon>
+      <h3>Nenhum Alerta Configurado</h3>
+      <p>Crie alertas para ser notificado quando os limites forem atingidos</p>
+      <ion-button (click)="openModal()">
+        <ion-icon name="add-outline" slot="start"></ion-icon>
+        Criar Primeiro Alerta
+      </ion-button>
+    </div>
+  </div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="openModal()">
+      <ion-icon name="add-outline"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+
+  <ion-modal [isOpen]="isModalOpen" (didDismiss)="closeModal()">
+    <ng-template>
+      <ion-header>
+        <ion-toolbar color="primary">
+          <ion-title>{{ editingAlert ? 'Editar' : 'Novo' }} Alerta</ion-title>
+          <ion-buttons slot="end">
+            <ion-button (click)="closeModal()">
+              <ion-icon name="close-outline"></ion-icon>
+            </ion-button>
+          </ion-buttons>
+        </ion-toolbar>
+      </ion-header>
+
+      <ion-content class="modal-content">
+        <div class="form-container">
+          <div class="form-group">
+            <label>Nome do Alerta</label>
+            <ion-input
+              [(ngModel)]="newAlert.name"
+              placeholder="Ex: Temperatura Alta"
+              fill="outline">
+            </ion-input>
+          </div>
+
+          <div class="form-group">
+            <label>Tipo</label>
+            <ion-select 
+              [(ngModel)]="newAlert.type"
+              interface="popover"
+              fill="outline">
+              <ion-select-option value="temperature">Temperatura</ion-select-option>
+              <ion-select-option value="humidity">Umidade</ion-select-option>
+            </ion-select>
+          </div>
+
+          <div class="limits-container">
+            <div class="form-group">
+              <label>Limite Mínimo</label>
+              <ion-input
+                [(ngModel)]="newAlert.minValue"
+                type="number"
+                placeholder="Ex: 15"
+                fill="outline">
+              </ion-input>
+              <span class="unit">{{ newAlert.type === 'temperature' ? 'ºC' : '%' }}</span>
+            </div>
+
+            <div class="form-group">
+              <label>Limite Máximo</label>
+              <ion-input
+                [(ngModel)]="newAlert.maxValue"
+                type="number"
+                placeholder="Ex: 30"
+                fill="outline">
+              </ion-input>
+              <span class="unit">{{ newAlert.type === 'temperature' ? 'ºC' : '%' }}</span>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <ion-button expand="block" (click)="closeModal()" fill="outline">
+              Cancelar
+            </ion-button>
+            <ion-button 
+              expand="block" 
+              (click)="saveAlert()"
+              [disabled]="!isFormValid()">
+              {{ editingAlert ? 'Atualizar' : 'Criar' }}
+            </ion-button>
+          </div>
+        </div>
+      </ion-content>
+    </ng-template>
+  </ion-modal>
+</ion-content>
