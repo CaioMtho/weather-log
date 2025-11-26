@@ -1,13 +1,118 @@
 <ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>history</ion-title>
+  <ion-toolbar color="primary">
+    <ion-title>Hist�rico de Leituras</ion-title>
+    <ion-button slot="end" fill="clear" (click)="logout()">
+      <ion-icon name="log-out-outline"></ion-icon>
+    </ion-button>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">history</ion-title>
-    </ion-toolbar>
-  </ion-header>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <div class="history-container">
+    <div class="filter-section">
+      <ion-button expand="block" fill="outline" (click)="toggleFilters()">
+        <ion-icon name="filter-outline" slot="start"></ion-icon>
+        {{ showFilters ? 'Ocultar Filtros' : 'Mostrar Filtros' }}
+        <ion-icon name="chevron-down-outline" slot="end" [class.rotated]="showFilters"></ion-icon>
+      </ion-button>
+
+      <div class="filters-content" [class.show]="showFilters">
+        <ion-card class="filter-card">
+          <ion-card-content>
+            <div class="filter-group">
+              <label class="filter-label">
+                <ion-icon name="calendar-outline"></ion-icon>
+                Per�odo
+              </label>
+              <ion-select 
+                [(ngModel)]="dateRange" 
+                (ionChange)="onDateRangeChange($event)"
+                interface="popover"
+                placeholder="Selecione o per�odo">
+                <ion-select-option value="all">Todos</ion-select-option>
+                <ion-select-option value="today">Hoje</ion-select-option>
+                <ion-select-option value="week">�ltima Semana</ion-select-option>
+                <ion-select-option value="month">�ltimo M�s</ion-select-option>
+              </ion-select>
+            </div>
+
+            <div class="filter-actions">
+              <ion-button size="small" fill="clear" (click)="clearFilters()">
+                Limpar Filtros
+              </ion-button>
+            </div>
+          </ion-card-content>
+        </ion-card>
+      </div>
+    </div>
+
+    <div class="readings-header">
+      <h2>
+        <ion-icon name="time-outline"></ion-icon>
+        Registros
+      </h2>
+      <ion-badge color="primary">{{ filteredReadings.length }} leituras</ion-badge>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoading">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Carregando hist�rico...</p>
+    </div>
+
+    <div class="readings-list" *ngIf="!isLoading && filteredReadings.length > 0">
+      <ion-card 
+        class="reading-card" 
+        *ngFor="let reading of filteredReadings">
+        <ion-card-content>
+          <div class="reading-header">
+            <div class="reading-date">
+              <ion-icon name="calendar-outline"></ion-icon>
+              <span>{{ formatDate(reading.timestamp) }}</span>
+            </div>
+            <div class="reading-time">
+              <ion-icon name="time-outline"></ion-icon>
+              <span>{{ formatTime(reading.timestamp) }}</span>
+            </div>
+          </div>
+
+          <div class="reading-metrics">
+            <div class="metric temperature" [ngClass]="getTemperatureClass(reading.temperature)">
+              <div class="metric-icon">
+                <ion-icon name="thermometer-outline"></ion-icon>
+              </div>
+              <div class="metric-info">
+                <div class="metric-value">{{ reading.temperature.toFixed(1) }}�C</div>
+                <div class="metric-label">Temperatura</div>
+              </div>
+            </div>
+
+            <div class="metric-divider"></div>
+
+            <div class="metric humidity" [ngClass]="getHumidityClass(reading.humidity)">
+              <div class="metric-icon">
+                <ion-icon name="water-outline"></ion-icon>
+              </div>
+              <div class="metric-info">
+                <div class="metric-value">{{ reading.humidity.toFixed(1) }}%</div>
+                <div class="metric-label">Umidade</div>
+              </div>
+            </div>
+          </div>
+        </ion-card-content>
+      </ion-card>
+    </div>
+
+    <div class="empty-state" *ngIf="!isLoading && filteredReadings.length === 0">
+      <ion-icon name="time-outline" class="empty-icon"></ion-icon>
+      <h3>Nenhum Registro Encontrado</h3>
+      <p>N�o h� leituras dispon�veis para o per�odo selecionado.</p>
+      <ion-button (click)="clearFilters()">
+        Limpar Filtros
+      </ion-button>
+    </div>
+  </div>
 </ion-content>
