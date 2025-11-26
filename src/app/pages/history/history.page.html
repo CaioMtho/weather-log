@@ -1,6 +1,6 @@
 <ion-header [translucent]="true">
   <ion-toolbar color="primary">
-    <ion-title>Hist�rico de Leituras</ion-title>
+    <ion-title>Histórico de Leituras</ion-title>
     <ion-button slot="end" fill="clear" (click)="logout()">
       <ion-icon name="log-out-outline"></ion-icon>
     </ion-button>
@@ -26,7 +26,7 @@
             <div class="filter-group">
               <label class="filter-label">
                 <ion-icon name="calendar-outline"></ion-icon>
-                Per�odo
+                Período
               </label>
               <ion-select 
                 [(ngModel)]="dateRange" 
@@ -35,8 +35,8 @@
                 placeholder="Selecione o per�odo">
                 <ion-select-option value="all">Todos</ion-select-option>
                 <ion-select-option value="today">Hoje</ion-select-option>
-                <ion-select-option value="week">�ltima Semana</ion-select-option>
-                <ion-select-option value="month">�ltimo M�s</ion-select-option>
+                <ion-select-option value="week">Última Semana</ion-select-option>
+                <ion-select-option value="month">Último Mês</ion-select-option>
               </ion-select>
             </div>
 
@@ -60,7 +60,7 @@
 
     <div class="loading-state" *ngIf="isLoading">
       <ion-spinner name="crescent"></ion-spinner>
-      <p>Carregando hist�rico...</p>
+      <p>Carregando histórico...</p>
     </div>
 
     <div class="readings-list" *ngIf="!isLoading && filteredReadings.length > 0">
@@ -85,7 +85,7 @@
                 <ion-icon name="thermometer-outline"></ion-icon>
               </div>
               <div class="metric-info">
-                <div class="metric-value">{{ reading.temperature.toFixed(1) }}�C</div>
+                <div class="metric-value">{{ reading.temperature.toFixed(1) }}ºC</div>
                 <div class="metric-label">Temperatura</div>
               </div>
             </div>
@@ -109,7 +109,7 @@
     <div class="empty-state" *ngIf="!isLoading && filteredReadings.length === 0">
       <ion-icon name="time-outline" class="empty-icon"></ion-icon>
       <h3>Nenhum Registro Encontrado</h3>
-      <p>N�o h� leituras dispon�veis para o per�odo selecionado.</p>
+      <p>Não há leituras disponíveis para o período selecionado.</p>
       <ion-button (click)="clearFilters()">
         Limpar Filtros
       </ion-button>
