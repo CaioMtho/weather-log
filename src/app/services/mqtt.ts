@@ -1,13 +1,17 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import * as mqtt from 'mqtt';
-import { BehaviorSubject, Observable } from 'rxjs';
+// Import the default package so both CommonJS/UMD and ESM builds resolve
+// correctly with various bundlers (Vite sometimes resolves to mqtt.js which
+// doesn't expose a named `connect` export). Use default and call `.connect`.
+import mqtt from 'mqtt';
+import type { MqttClient } from 'mqtt';
+import { BehaviorSubject, Observable, lastValueFrom } from 'rxjs';
 import { WeatherReading } from '../models/reading.model';
 @Injectable({
   providedIn: 'root',
 })
 export class Mqtt {
-  private client: mqtt.MqttClient | null = null;
+  private client: MqttClient | null = null;
   private currentReadingSubject = new BehaviorSubject<WeatherReading | null>(null);
   public currentReading$ = this.currentReadingSubject.asObservable();
   
@@ -28,18 +32,19 @@ export class Mqtt {
 
     console.log('Conectando ao HiveMq...');
 
-    this.client = mqtt.connect(this.BROKER_URL, {
+    const mqttLib: any = (mqtt as any)?.default ?? mqtt;
+    this.client = mqttLib.connect(this.BROKER_URL, {
       clientId: 'weather-app-'+ Math.random().toString(16).substr(2, 8),
       clean: true,
       reconnectPeriod: 5000,
       connectTimeout: 30000,
     });
 
-    this.client.on('connect', () => {
+    this.client!.on('connect', () => {
       console.log('Conectado ao HiveMq');
       this.connectionStatusSubject.next(true);
 
-      this.client?.subscribe(this.TOPIC, { qos: 0}, (err) => {
+      this.client!.subscribe(this.TOPIC, { qos: 0}, (err) => {
         if (err) {
           console.error('Erro ao se inscrever no tópico:', err);
         } else {
@@ -48,7 +53,7 @@ export class Mqtt {
       });
     });
 
-    this.client.on('message', async (topic, message) => {
+    this.client!.on('message', async (topic, message) => {
       try {
         const data = JSON.parse(message.toString());
         console.log('Mensagem recebida:', data);
@@ -67,27 +72,25 @@ export class Mqtt {
       }
     });
 
-    this.client.on('error', (error) => {
+    this.client!.on('error', (error) => {
       console.error('Erro na conexão MQTT:', error);
       this.connectionStatusSubject.next(false);
     });
 
-    this.client.on('close', () => {
+    this.client!.on('close', () => {
       console.log('Conexão MQTT fechada');
       this.connectionStatusSubject.next(false);
     });
 
-    this.client.on('reconnect', () => {
+    this.client!.on('reconnect', () => {
       console.log('Reconectando ao HiveMq...');
     });
   }
 
   private async saveToFirebase(topic: string, data: any): Promise<void> {
     try {
-      const response = await this.http.post(this.API_URL, {
-        topic,
-        data
-      }).toPromise();
+        // toPromise() is deprecated; using lastValueFrom for single-emission HTTP observable
+        const response = await lastValueFrom(this.http.post(this.API_URL, { topic, data }));
 
       console.log('Salvo no firebase')
     }catch (error) {
