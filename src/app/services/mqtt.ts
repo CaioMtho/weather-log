@@ -2,8 +2,9 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import mqtt from 'mqtt';
 import type { MqttClient } from 'mqtt';
-import { BehaviorSubject, Observable, lastValueFrom } from 'rxjs';
+import { BehaviorSubject, lastValueFrom } from 'rxjs';
 import { WeatherReading } from '../models/reading.model';
+
 @Injectable({
   providedIn: 'root',
 })
@@ -17,17 +18,18 @@ export class Mqtt {
 
   private readonly BROKER_URL = 'wss://broker.hivemq.com:8884/mqtt';
   private readonly TOPIC = 'wokwi/weather';
-  private readonly API_URL = 'https://weather-log-h9e5c2r2l-caiomathol.vercel.app/api/mqtt-handler';
+  private readonly API_URL = 'https://firestore.googleapis.com/v1/projects/weather-log-mqtt/databases/(default)/documents/leituras';
+  private readonly API_KEY = 'AIzaSyBarUxa26oz1n15Gxw73p2JtF9p-CcK3Hc';
 
   constructor(private http: HttpClient) {}
 
   connect(): void {
     if(this.client && this.client.connected) {
-      console.log('Já conectado ao MQTT');
+      console.log('✅ Já conectado ao MQTT');
       return;
     }
 
-    console.log('Conectando ao HiveMq...');
+    console.log('🔌 Conectando ao HiveMQ...');
 
     const mqttLib: any = (mqtt as any)?.default ?? mqtt;
     this.client = mqttLib.connect(this.BROKER_URL, {
@@ -38,14 +40,14 @@ export class Mqtt {
     });
 
     this.client!.on('connect', () => {
-      console.log('Conectado ao HiveMq');
+      console.log('✅ Conectado ao HiveMQ!');
       this.connectionStatusSubject.next(true);
 
       this.client!.subscribe(this.TOPIC, { qos: 0}, (err) => {
         if (err) {
-          console.error('Erro ao se inscrever no tópico:', err);
+          console.error('❌ Erro ao inscrever:', err);
         } else {
-          console.log('Inscrito no tópico:', this.TOPIC);
+          console.log('✅ Inscrito no tópico:', this.TOPIC);
         }
       });
     });
@@ -53,45 +55,70 @@ export class Mqtt {
     this.client!.on('message', async (topic, message) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log('Mensagem recebida:', data);
+        console.log('📥 MQTT:', data);
 
-        const reading : WeatherReading = {
+        // Criar timestamp AQUI (no cliente) com hora correta
+        const now = new Date();
+
+        // Criar objeto de leitura
+        const reading: WeatherReading = {
           temperature: data.temperature,
           humidity: data.humidity,
-          timestamp: new Date(data.timestamp)
-        }
+          timestamp: now  // ← Timestamp do CLIENTE (correto!)
+        };
 
+        console.log('📊 Leitura:', `${reading.temperature}°C ${reading.humidity}% às ${now.toLocaleTimeString()}`);
+
+        // Atualizar UI em tempo real
         this.currentReadingSubject.next(reading);
 
-        await this.saveToFirebase(topic, data);
+        // Salvar no Firestore COM timestamp correto
+        await this.saveToFirebase(topic, data, now);
+
       } catch (error) {
-        console.error('Erro ao processar a mensagem:', error);
+        console.error('❌ Erro ao processar:', error);
       }
     });
 
     this.client!.on('error', (error) => {
-      console.error('Erro na conexão MQTT:', error);
+      console.error('❌ Erro MQTT:', error);
       this.connectionStatusSubject.next(false);
     });
 
     this.client!.on('close', () => {
-      console.log('Conexão MQTT fechada');
+      console.log('⚠️  Conexão fechada');
       this.connectionStatusSubject.next(false);
     });
 
     this.client!.on('reconnect', () => {
-      console.log('Reconectando ao HiveMq...');
+      console.log('🔄 Reconectando...');
     });
   }
 
-  private async saveToFirebase(topic: string, data: any): Promise<void> {
+  private async saveToFirebase(topic: string, data: any, timestamp: Date): Promise<void> {
     try {
-        // toPromise() is deprecated; using lastValueFrom for single-emission HTTP observable
-        const response = await lastValueFrom(this.http.post(this.API_URL, { topic, data }));
+      // Payload no formato REST API do Firestore
+      const payload = {
+        fields: {
+          topic: { stringValue: topic },
+          temperature: { doubleValue: data.temperature },
+          humidity: { doubleValue: data.humidity },
+          publishedAt: { timestampValue: timestamp.toISOString() }  // ← Timestamp correto!
+        }
+      };
 
-      console.log('Salvo no firebase')
-    }catch (error) {
-      console.error('Erro ao salvar no Firebase:', error);
+      console.log('💾 Salvando com timestamp:', timestamp.toISOString());
+
+      const url = `${this.API_URL}?key=${this.API_KEY}`;
+      const response = await lastValueFrom(
+        this.http.post(url, payload)
+      );
+
+      console.log('✅ Salvo no Firestore');
+      
+    } catch (error: any) {
+      console.error('❌ Erro ao salvar:', error);
+      // Não bloquear UI
     }
   }
 
@@ -100,7 +127,7 @@ export class Mqtt {
       this.client.end();
       this.client = null;
       this.connectionStatusSubject.next(false);
-      console.log('Desconectado do HiveMq');
+      console.log('👋 Desconectado');
     }
   }
 
