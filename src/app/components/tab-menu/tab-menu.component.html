@@ -1,0 +1,34 @@
+<ion-tab-bar slot="bottom" color="light" class="app-tab-bar">
+  <ion-tab-button 
+    tab="home"
+    [routerLink]="['/dashboard']"
+    [routerLinkActive]="['active']"
+    [routerLinkActiveOptions]="{ exact: false }"
+    class="tab-button">
+    <ion-icon name="home-outline" class="tab-icon"></ion-icon>
+    <ion-label class="tab-label">Início</ion-label>
+  </ion-tab-button>
+
+  <ion-tab-button 
+    tab="history"
+    [routerLink]="['/history']"
+    [routerLinkActive]="['active']"
+    [routerLinkActiveOptions]="{ exact: false }"
+    class="tab-button">
+    <ion-icon name="calendar-outline" class="tab-icon"></ion-icon>
+    <ion-label class="tab-label">Histórico</ion-label>
+  </ion-tab-button>
+
+  <ion-tab-button 
+    tab="alerts"
+    [routerLink]="['/alerts']"
+    [routerLinkActive]="['active']"
+    [routerLinkActiveOptions]="{ exact: false }"
+    class="tab-button">
+    <ion-badge *ngIf="(triggeredAlertsCount$ | async) as count" [hidden]="count === 0" class="alert-badge">
+      {{ count }}
+    </ion-badge>
+    <ion-icon name="alert-outline" class="tab-icon"></ion-icon>
+    <ion-label class="tab-label">Alertas</ion-label>
+  </ion-tab-button>
+</ion-tab-bar>

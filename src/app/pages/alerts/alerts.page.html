@@ -120,7 +120,7 @@
                 placeholder="Ex: 15"
                 fill="outline">
               </ion-input>
-              <span class="unit">{{ newAlert.type === 'temperature' ? 'ºC' : '%' }}</span>
+              <span class="unit">{{ newAlert.type === 'temperature' ? '°C' : '%' }}</span>
             </div>
 
             <div class="form-group">
@@ -131,8 +131,13 @@
                 placeholder="Ex: 30"
                 fill="outline">
               </ion-input>
-              <span class="unit">{{ newAlert.type === 'temperature' ? 'ºC' : '%' }}</span>
+              <span class="unit">{{ newAlert.type === 'temperature' ? '°C' : '%' }}</span>
             </div>
+          </div>
+
+          <div *ngIf="saveError" class="error-message">
+            <ion-icon name="alert-circle-outline"></ion-icon>
+            {{ saveError }}
           </div>
 
           <div class="form-actions">

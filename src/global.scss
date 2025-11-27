@@ -35,3 +35,21 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+/**
+ * Menu Tab Bar Fixes
+ * Ensure content doesn't get overlapped by fixed bottom menu
+ */
+ion-content.ion-page {
+  --offset-bottom: 64px;
+  padding-bottom: 64px;
+}
+
+.ion-page {
+  padding-bottom: 64px;
+}
+
+ion-app {
+  --ion-safe-area-bottom: 64px;
+}
+

@@ -1,0 +1,24 @@
+ion-app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+ion-router-outlet {
+  flex: 1;
+  overflow-y: auto;
+}
+
+// Garante que o conteúdo não seja sobreposto pelo menu fixo
+:host ::ng-deep ion-app {
+  --ion-safe-area-bottom: 64px;
+}
+
+:host ::ng-deep ion-content.ion-page {
+  --offset-bottom: 64px;
+  padding-bottom: 64px !important;
+}
+
+:host ::ng-deep .ion-page {
+  padding-bottom: 64px !important;
+}

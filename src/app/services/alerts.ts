@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Firestore, collection, addDoc, updateDoc, deleteDoc, 
-         doc, query, where, getDocs, orderBy, Timestamp } from '@angular/fire/firestore';
+         doc, query, where, getDocs, orderBy, Timestamp, onSnapshot, Query } from '@angular/fire/firestore';
 import { Alert, AlertTrigger } from '../models/alert.model';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { WeatherReading } from '../models/reading.model';
@@ -15,49 +15,97 @@ export class Alerts {
   private triggeredAlertsCount = new BehaviorSubject<number>(0);
   public triggeredAlertsCount$ = this.triggeredAlertsCount.asObservable();
 
+  private userAlertsSubject = new BehaviorSubject<Alert[]>([]);
+  public userAlerts$ = this.userAlertsSubject.asObservable();
+
+  private unsubscribeUserAlerts?: () => void;
+
   constructor(private firestore: Firestore) {}
 
   async createAlert(alert: Omit<Alert, 'id' | 'createdAt' | 'updatedAt'>): Promise<string> {
-    const alertsRef = collection(this.firestore, 'alerts');
-    const now = new Date();
-    
-    const docRef = await addDoc(alertsRef, {
-      ...alert,
-      createdAt: Timestamp.fromDate(now),
-      updatedAt: Timestamp.fromDate(now)
-    });
+    try {
+      const alertsRef = collection(this.firestore, 'alerts');
+      const now = new Date();
+      
+      const docRef = await addDoc(alertsRef, {
+        ...alert,
+        createdAt: Timestamp.fromDate(now),
+        updatedAt: Timestamp.fromDate(now)
+      });
 
-    return docRef.id;
+      return docRef.id;
+    } catch (error) {
+      console.error('Erro ao criar alerta:', error);
+      throw error;
+    }
   }
 
   async updateAlert(id: string, data: Partial<Alert>): Promise<void> {
-    const alertRef = doc(this.firestore, 'alerts', id);
-    await updateDoc(alertRef, {
-      ...data,
-      updatedAt: Timestamp.fromDate(new Date())
-    });
+    try {
+      const alertRef = doc(this.firestore, 'alerts', id);
+      await updateDoc(alertRef, {
+        ...data,
+        updatedAt: Timestamp.fromDate(new Date())
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar alerta:', error);
+      throw error;
+    }
   }
 
   async deleteAlert(id: string): Promise<void> {
-    const alertRef = doc(this.firestore, 'alerts', id);
-    await deleteDoc(alertRef);
+    try {
+      const alertRef = doc(this.firestore, 'alerts', id);
+      await deleteDoc(alertRef);
+    } catch (error) {
+      console.error('Erro ao deletar alerta:', error);
+      throw error;
+    }
   }
 
   async getUserAlerts(userId: string): Promise<Alert[]> {
     const alertsRef = collection(this.firestore, 'alerts');
+    // Only use where clause, filter and sort in code to avoid needing composite index
     const q = query(
       alertsRef, 
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', userId)
     );
 
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({
+    const alerts = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       createdAt: doc.data()['createdAt'].toDate(),
       updatedAt: doc.data()['updatedAt'].toDate()
     } as Alert));
+
+    // Sort by createdAt descending in code
+    return alerts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  subscribeToUserAlerts(userId: string): Observable<Alert[]> {
+    const alertsRef = collection(this.firestore, 'alerts');
+    const q = query(alertsRef, where('userId', '==', userId));
+
+    return new Observable(observer => {
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const alerts = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          createdAt: doc.data()['createdAt'].toDate(),
+          updatedAt: doc.data()['updatedAt'].toDate()
+        } as Alert));
+
+        // Sort by createdAt descending
+        const sortedAlerts = alerts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        observer.next(sortedAlerts);
+      }, (error) => {
+        console.error('Erro ao observar alertas:', error);
+        observer.error(error);
+      });
+
+      return () => unsubscribe();
+    });
   }
 
   async getActiveAlerts(userId: string): Promise<Alert[]> {
@@ -131,24 +179,30 @@ export class Alerts {
     const triggersRef = collection(this.firestore, 'alert_triggers');
     const alertsRef = collection(this.firestore, 'alerts');
     
+    // Query all alerts for this user
     const alertsQuery = query(alertsRef, where('userId', '==', userId));
     const alertsSnapshot = await getDocs(alertsQuery);
     const alertIds = alertsSnapshot.docs.map(doc => doc.id);
 
     if (alertIds.length === 0) return [];
 
+    // Get all triggers and filter/sort in code to avoid needing composite index
     const triggersQuery = query(
       triggersRef,
-      where('alertId', 'in', alertIds),
-      orderBy('timestamp', 'desc')
+      where('alertId', 'in', alertIds)
     );
 
     const snapshot = await getDocs(triggersQuery);
-    return snapshot.docs.map(doc => ({
+    const triggers = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
       timestamp: doc.data()['timestamp'].toDate()
     } as AlertTrigger));
+
+    // Sort by timestamp descending and apply limit in code
+    return triggers
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, limit);
   }
 
   async acknowledgeAlert(triggerId: string): Promise<void> {
