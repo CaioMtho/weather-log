@@ -1,13 +1,79 @@
-<ion-header [translucent]="true">
-  <ion-toolbar>
-    <ion-title>register</ion-title>
-  </ion-toolbar>
-</ion-header>
+<ion-content [fullscreen]="true" class="register-page">
+  <div class="auth-container">
+    <div class="logo-section">
+      <ion-icon name="cloud-circle-outline" class="app-logo"></ion-icon>
+      <h1>Crie sua conta</h1>
+      <p>Junte-se a nós para monitorar o clima.</p>
+    </div>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">register</ion-title>
-    </ion-toolbar>
-  </ion-header>
+    <ion-card class="auth-card">
+      <ion-card-content>
+        <form (ngSubmit)="register()" #registerForm="ngForm">
+          <ion-list lines="full" class="ion-no-padding">
+            <ion-item>
+              <ion-input
+                label="Nome Completo"
+                labelPlacement="floating"
+                type="text"
+                [(ngModel)]="fullName"
+                name="fullName"
+                required
+              ></ion-input>
+            </ion-item>
+            
+            <ion-item>
+              <ion-input
+                label="E-mail"
+                labelPlacement="floating"
+                type="email"
+                [(ngModel)]="email"
+                name="email"
+                required
+                email
+              ></ion-input>
+            </ion-item>
+
+            <ion-item>
+              <ion-input
+                label="Senha"
+                labelPlacement="floating"
+                type="password"
+                [(ngModel)]="password"
+                name="password"
+                required
+                minlength="6"
+              ></ion-input>
+            </ion-item>
+            
+            <ion-item>
+              <ion-input
+                label="Confirmar Senha"
+                labelPlacement="floating"
+                type="password"
+                [(ngModel)]="confirmPassword"
+                name="confirmPassword"
+                required
+              ></ion-input>
+            </ion-item>
+          </ion-list>
+
+          <ion-button
+            expand="block"
+            type="submit"
+            [disabled]="registerForm.invalid || isLoading || !passwordsMatch()"
+            class="ion-margin-top"
+          >
+            <ion-spinner *ngIf="isLoading" name="crescent"></ion-spinner>
+            <span *ngIf="!isLoading">Cadastrar</span>
+          </ion-button>
+
+          <div class="links-section">
+            <ion-text color="medium">
+              Já tem conta? <a [routerLink]="['/login']">Faça login</a>
+            </ion-text>
+          </div>
+        </form>
+      </ion-card-content>
+    </ion-card>
+  </div>
 </ion-content>
